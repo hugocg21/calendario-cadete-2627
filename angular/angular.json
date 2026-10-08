@@ -1,1 +1,44 @@
-{"version":1,"projects":{"calendario-cadete":{"projectType":"application","root":"","sourceRoot":"src","prefix":"app","architect":{"build":{"builder":"@angular/build:application","options":{"browser":"src/main.ts","index":"src/index.html","styles":["src/styles.css"],"assets":[{"glob":"**/*","input":"../assests","output":"assests"}]}},"serve":{"builder":"@angular/build:dev-server","options":{"buildTarget":"calendario-cadete:build"}}}}}}
+{
+  "version": 1,
+  "projects": {
+    "calendario-cadete": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "index": "src/index.html",
+            "styles": [
+              "src/styles.css"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "../assests",
+                "output": "assests"
+              }
+            ],
+            "tsConfig": "tsconfig.app.json",
+            "outputPath": "dist/calendario-cadete"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all"
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "calendario-cadete:build"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json"
+}

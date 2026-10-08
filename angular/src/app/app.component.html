@@ -1,0 +1,49 @@
+<div [class.dark]="dark" class="app-shell">
+<header><div class="head"><div><h1>🏀 Cadete Masculino 1ª · 2026/27</h1><p>C.B. Navia Talleres Gonfer · Calendario de liga</p></div><div class="actions"><button class="secondary" (click)="toggleTheme()">{{dark?'☀️ Modo claro':'🌙 Modo oscuro'}}</button><button class="secondary" (click)="refresh()">🔄 Actualizar</button><button class="secondary" (click)="print()">🖨️ Imprimir / PDF</button></div></div></header>
+<main>
+<nav class="tabs" aria-label="Secciones">
+<button class="tab" [class.active]="tab==='coach'" (click)="setTab('coach')">🏀 Mi calendario</button>
+<button class="tab" [class.active]="tab==='league'" (click)="setTab('league')">📅 Liga completa</button>
+<button class="tab" [class.active]="tab==='standings'" (click)="setTab('standings')">🏆 Clasificación</button>
+<button class="tab" [class.active]="tab==='statistics'" (click)="setTab('statistics')">📊 Estadísticas</button>
+<label class="tab import-label" for="fullExcel">📥 Importar tabla completa (22 columnas)</label>
+<input id="fullExcel" type="file" accept=".xlsx,.xls" (change)="importExcel($event)" [disabled]="importing" hidden>
+</nav>
+<div class="notice"><b>☁️ Calendario sincronizado:</b> resultados y estadísticas compartidos entre dispositivos. <span>{{sync}}</span></div>
+<p *ngIf="error" class="error">{{error}}</p>
+<section *ngIf="tab==='coach'||tab==='league'">
+<div class="filter-row"><input type="search" [(ngModel)]="search" placeholder="Buscar equipo o pabellón…"><select [(ngModel)]="round"><option value="">Todas las jornadas</option><option *ngFor="let n of rounds" [value]="n">Jornada {{n}}</option></select></div>
+<ng-container *ngFor="let phase of [1,2]">
+<h2 class="phase">{{phase===1?'PRIMERA VUELTA · JORNADAS 1–11':'SEGUNDA VUELTA · JORNADAS 12–22'}}</h2>
+<div class="grid">
+<ng-container *ngFor="let g of filtered">
+<article *ngIf="phase===1?g.round<=11:g.round>=12" class="game" [class.home]="tab==='coach'&&g.home==='NAV'" [class.away]="tab==='coach'&&g.away==='NAV'">
+<div class="gh"><span>JORNADA {{g.round}}</span><span *ngIf="tab==='coach'">{{g.home==='NAV'?'🏠 LOCAL':'✈️ VISITANTE'}}</span></div>
+<div class="match"><div class="team"><img class="logo" [src]="logos[g.home]" [alt]="'Logo '+name(g.home)"><div>{{name(g.home)}}</div></div>
+<div class="score" *ngIf="played(g);else noScore">{{g.home_score}}<br><small>—</small><br>{{g.away_score}}</div><ng-template #noScore><div class="score vs">VS</div></ng-template>
+<div class="team"><img class="logo" [src]="logos[g.away]" [alt]="'Logo '+name(g.away)"><div>{{name(g.away)}}</div></div></div>
+<div class="meta"><div><strong>Fecha</strong>{{g.game_date | date:'dd MMM yyyy'}}</div><div><strong>Hora</strong>{{g.game_time?.slice(0,5)}}</div><div><strong>Localización</strong>{{g.venue}}</div></div>
+<button class="edit" (click)="openEditor(g)">✏️ Editar partido / resultado</button>
+</article></ng-container></div></ng-container></section>
+<section *ngIf="tab==='standings'">
+<div class="rules"><b>Sistema:</b> victoria = 2 puntos, derrota = 1. Los partidos sin resultado no computan. Desempates por mini-liga y diferencia de puntos.</div>
+<div class="tablewrap"><table><thead><tr><th>Pos.</th><th>Equipo</th><th>PJ</th><th>G</th><th>P</th><th>PF</th><th>PC</th><th>Dif.</th><th>Pts.</th></tr></thead><tbody>
+<tr *ngFor="let s of standings;let i=index" [class.nav]="s.team==='NAV'"><td>{{i+1}}</td><td>{{name(s.team)}}</td><td>{{s.PJ}}</td><td>{{s.G}}</td><td>{{s.P}}</td><td>{{s.PF}}</td><td>{{s.PC}}</td><td>{{s.DIF}}</td><td><b>{{s.PTS}}</b></td></tr>
+</tbody></table></div></section>
+<section *ngIf="tab==='statistics'">
+<h2>📋 Tablas originales del Excel</h2><p>22 columnas originales, porcentajes y fila TOTALES, sin recalcular.</p>
+<div class="filter-row"><select [(ngModel)]="selectedGame"><option value="">Selecciona un partido importado</option><option *ngFor="let g of importedGames" [value]="g.id">J{{g.round}} · {{name(g.home)}} vs {{name(g.away)}}</option></select></div>
+<div *ngIf="!selectedTables.length" class="notice">Todavía no hay tablas originales importadas para este partido.</div>
+<ng-container *ngFor="let t of selectedTables"><h3>{{t.title}}</h3><div class="original-table"><table><thead><tr><th *ngFor="let h of t.headers[0]">{{h}}</th></tr><tr><th *ngFor="let h of t.headers[1]">{{h}}</th></tr></thead><tbody><tr *ngFor="let r of t.rows" [class.total]="isTotal(r)"><td *ngFor="let v of r">{{v}}</td></tr></tbody></table></div></ng-container>
+<h2>📊 Estadísticas acumuladas de Navia</h2><div class="tablewrap"><table><thead><tr><th>Jugador</th><th>PJ</th><th>PTS</th><th>Media</th><th>REB</th><th>AST</th><th>VAL</th></tr></thead><tbody><tr *ngFor="let p of navTotals"><td>{{p.name}}</td><td>{{p.pj}}</td><td>{{p.pts}}</td><td>{{p.pts/p.pj | number:'1.1-1'}}</td><td>{{p.reb}}</td><td>{{p.ast}}</td><td>{{p.val}}</td></tr></tbody></table></div>
+</section>
+<section class="editor-panel" *ngIf="editing as g"><h2>Editar · J{{g.round}} · {{name(g.home)}} vs {{name(g.away)}}</h2><form (ngSubmit)="save()">
+<label>Fecha<input type="date" name="date" [(ngModel)]="editDate" required></label>
+<label>Hora<input type="time" name="time" [(ngModel)]="editTime"></label>
+<label>Pabellón<input type="text" name="venue" [(ngModel)]="editVenue"></label>
+<label>Puntos local<input type="number" name="hs" [(ngModel)]="editHomeScore" min="0"></label>
+<label>Puntos visitante<input type="number" name="as" [(ngModel)]="editAwayScore" min="0"></label>
+<label>Código privado de edición<input type="password" name="code" [(ngModel)]="editCode" required></label>
+<div class="actions"><button class="primary" type="submit" [disabled]="saving">{{saving?'Guardando…':'Guardar y sincronizar'}}</button><button type="button" class="secondary" (click)="editing=null">Cancelar</button></div>
+</form></section>
+</main></div>

@@ -18,6 +18,7 @@ export class AppComponent implements OnInit{
  editDate='';editTime='';editVenue='';editHomeScore:number|null=null;editAwayScore:number|null=null;
  ngOnInit(){try{this.dark=localStorage.getItem('cm1_2627_theme')==='dark'}catch{}this.refresh();}
  setTab(tab:Tab){this.tab=tab;}
+ print(){window.print();}
  toggleTheme(){this.dark=!this.dark;try{localStorage.setItem('cm1_2627_theme',this.dark?'dark':'light')}catch{}}
  async refresh(){this.error='';this.sync='Sincronizando…';try{
  const result=await Promise.all([this.api.games(),this.api.excel(),this.api.stats()]);
@@ -56,7 +57,7 @@ export class AppComponent implements OnInit{
  openEditor(g:Game){this.editing=g;this.editDate=g.game_date;this.editTime=(g.game_time||'').slice(0,5);this.editVenue=g.venue;this.editHomeScore=g.home_score;this.editAwayScore=g.away_score;this.editCode='';}
  async save(){const g=this.editing;if(!g)return;const hs=this.editHomeScore,as=this.editAwayScore;
  if((hs===null)!==(as===null)){alert('Introduce ambos marcadores o deja ambos vacíos.');return;}
- if(hs!==null&&(!Number.isInteger(hs)||!Number.isInteger(as)||hs<0||as!<0||hs===as)){alert('Marcador no válido: introduce puntos enteros, positivos y sin empate.');return;}
+ if(hs!==null&&(!Number.isInteger(hs)||!Number.isInteger(as)||hs<0||as<0||hs===as)){alert('Marcador no válido: introduce puntos enteros, positivos y sin empate.');return;}
  this.saving=true;try{await this.api.edit({code:this.editCode,id:g.id,home_score:hs,away_score:as,game_date:this.editDate,game_time:this.editTime,venue:this.editVenue.trim()});this.editing=null;await this.refresh();}catch(e){alert(this.message(e));}finally{this.saving=false;}}
  private locate(rows:unknown[][],code:string){const target=norm(this.name(code));return rows.findIndex(row=>norm(row[0])===target);}
  private parse(wb:XLSX.WorkBook,g:Game):Omit<ExcelTable,'game_id'>[]{

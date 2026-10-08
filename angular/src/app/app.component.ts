@@ -55,10 +55,10 @@ export class AppComponent implements OnInit{
  for(const row of this.playerStats.filter(x=>x.team_code==='NAV')){let r=result.get(row.player_name);if(!r){r={name:row.player_name,pj:0,pts:0,reb:0,ast:0,val:0};result.set(row.player_name,r);}r.pj++;r.pts+=row.points;r.reb+=row.rebounds_total;r.ast+=row.assists;r.val+=row.efficiency;}
  return [...result.values()].sort((a,b)=>b.pts-a.pts);}
  openEditor(g:Game){this.editing=g;this.editDate=g.game_date;this.editTime=(g.game_time||'').slice(0,5);this.editVenue=g.venue;this.editHomeScore=g.home_score;this.editAwayScore=g.away_score;this.editCode='';}
- async save(){const g=this.editing;if(!g)return;const hs=this.editHomeScore,as=this.editAwayScore;
- if((hs===null)!==(as===null)){alert('Introduce ambos marcadores o deja ambos vacíos.');return;}
- if(hs!==null&&(!Number.isInteger(hs)||!Number.isInteger(as)||hs<0||as<0||hs===as)){alert('Marcador no válido: introduce puntos enteros, positivos y sin empate.');return;}
- this.saving=true;try{await this.api.edit({code:this.editCode,id:g.id,home_score:hs,away_score:as,game_date:this.editDate,game_time:this.editTime,venue:this.editVenue.trim()});this.editing=null;await this.refresh();}catch(e){alert(this.message(e));}finally{this.saving=false;}}
+ async save(){const g=this.editing;if(!g)return;const hs=this.editHomeScore,awayPoints=this.editAwayScore;
+ if((hs===null)!==(awayPoints===null)){alert('Introduce ambos marcadores o deja ambos vacíos.');return;}
+ if(hs!==null&&awayPoints!==null&&(!Number.isInteger(hs)||!Number.isInteger(awayPoints)||hs<0||awayPoints<0||hs===awayPoints)){alert('Marcador no válido: introduce puntos enteros, positivos y sin empate.');return;}
+ this.saving=true;try{await this.api.edit({code:this.editCode,id:g.id,home_score:hs,away_score:awayPoints,game_date:this.editDate,game_time:this.editTime,venue:this.editVenue.trim()});this.editing=null;await this.refresh();}catch(e){alert(this.message(e));}finally{this.saving=false;}}
  private locate(rows:unknown[][],code:string){const target=norm(this.name(code));return rows.findIndex(row=>norm(row[0])===target);}
  private parse(wb:XLSX.WorkBook,g:Game):Omit<ExcelTable,'game_id'>[]{
  const sheet=wb.Sheets[wb.SheetNames[0]],a=XLSX.utils.sheet_to_json<unknown[]>(sheet,{header:1,defval:'',raw:false});
